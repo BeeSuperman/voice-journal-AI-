@@ -1,0 +1,26 @@
+{
+  "name": "語音日記 · VoiceJournal",
+  "short_name": "語音日記",
+  "description": "用語音記錄生活，AI 幫你反思總結，讓每一天都有意義",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0D0D0F",
+  "theme_color": "#7C6EFF",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["productivity", "utilities"],
+  "lang": "zh-TW"
+}
