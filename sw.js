@@ -1,14 +1,16 @@
 // Service Worker — 讓 App 可離線使用
-const CACHE_NAME = 'voice-journal-v6';
+const CACHE_NAME = 'voice-journal-v7';
+// 動態計算基礎路徑，相容 root 與 subdirectory 部署（如 GitHub Pages）
+const BASE = self.location.pathname.replace(/\/sw\.js$/, '');
 const ASSETS = [
-  '/',
-  '/index.html',
-  '/styles.css?v=6',
-  '/js/db.js',
-  '/js/ai.js',
-  '/js/voice.js',
-  '/js/templates.js',
-  '/js/app.js?v=6',
+  `${BASE}/`,
+  `${BASE}/index.html`,
+  `${BASE}/styles.css?v=6`,
+  `${BASE}/js/db.js`,
+  `${BASE}/js/ai.js`,
+  `${BASE}/js/voice.js`,
+  `${BASE}/js/templates.js`,
+  `${BASE}/js/app.js?v=6`,
 ];
 
 self.addEventListener('install', (e) => {

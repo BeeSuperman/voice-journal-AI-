@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0D0D0F">
+<meta name="description" content="語音日記 — 用語音記錄生活，AI 幫你反思總結，讓每一天更有意義">
+<title>語音日記 · VoiceJournal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   Design Tokens
+   ============================================================ */
+:root {
+  --bg:       #0D0D0F;
+  --bg2:      #13131A;
+  --surface:  #1C1C27;
+  --surface2: #252535;
+  --border:   rgba(255,255,255,0.07);
+
+  --primary:      #7C6EFF;
+  --primary-dim:  rgba(124,110,255,0.15);
+  --primary-glow: rgba(124,110,255,0.35);
+  --teal:         #4ECDC4;
+  --teal-dim:     rgba(78,205,196,0.15);
+  --yellow:       #FFD93D;
+  --red:          #FF6B6B;
+  --green:        #6BCB77;
+
+  --text:    #E8E8F5;
+  --text-2:  #A8A8C0;
+  --text-3:  #666680;
+
+  --radius:  14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --transition: 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html {
+  scroll-behavior: smooth;
+  font-family: 'Inter', -apple-system, 'PingFang SC', 'Noto Sans TC', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+body { overflow-x: hidden; }
+
+/* ─── Utility ─── */
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.section {
+  padding: 100px 0;
+}
+
+.section-label {
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--primary);
+  background: var(--primary-dim);
+  padding: 6px 16px;
+  border-radius: 99px;
+  margin-bottom: 16px;
+}
+
+.section-title {
+  font-size: clamp(28px, 5vw, 44px);
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  margin-bottom: 16px;
+}
+
+.section-sub {
+  font-size: 18px;
+  color: var(--text-2);
+  max-width: 560px;
+  margin-bottom: 48px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 28px;
+  border-radius: 99px;
+  font-size: 16px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: var(--transition);
+  text-decoration: none;
+  font-family: inherit;
+}
+.btn-primary {
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 4px 20px var(--primary-glow);
+}
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px var(--primary-glow);
+}
+.btn-outline {
+  background: transparent;
+  color: var(--text);
+  border: 1.5px solid rgba(255,255,255,0.2);
+}
+.btn-outline:hover {
+  border-color: var(--primary);
+  background: var(--primary-dim);
+}
+.btn-lg { padding: 16px 36px; font-size: 17px; }
+
+/* ─── Nav ─── */
+.nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  padding: 16px 24px;
+  background: rgba(13,13,15,0.85);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.nav-logo {
+  font-size: 18px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.nav-links {
+  display: flex;
+  gap: 24px;
+  list-style: none;
+}
+.nav-links a {
+  color: var(--text-2);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+.nav-links a:hover { color: var(--text); }
+
+/* ─── Hero ─── */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 120px 24px 80px;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute;
+  top: 30%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, var(--primary-dim) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 20px;
+  border-radius: 99px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  font-size: 14px;
+  color: var(--text-2);
+  margin-bottom: 28px;
+}
+.hero-badge .dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+  animation: pulse-dot 2s infinite;
+}
+.hero h1 {
+  font-size: clamp(36px, 8vw, 72px);
+  font-weight: 800;
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+  position: relative;
+  z-index: 1;
+}
+.hero h1 em {
+  font-style: normal;
+  background: linear-gradient(135deg, var(--primary), var(--teal));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.hero p {
+  font-size: 19px;
+  color: var(--text-2);
+  max-width: 520px;
+  margin: 20px auto 36px;
+  position: relative;
+  z-index: 1;
+}
+.hero-actions {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  flex-wrap: wrap;
+  position: relative;
+  z-index: 1;
+}
+
+/* Sound Wave */
+.wave-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  height: 48px;
+  margin-top: 40px;
+  position: relative;
+  z-index: 1;
+}
+.wave-bar {
+  width: 4px;
+  border-radius: 4px;
+  background: var(--primary);
+  animation: wave 1.2s ease-in-out infinite;
+}
+.wave-bar:nth-child(1) { height: 12px; animation-delay: 0s; }
+.wave-bar:nth-child(2) { height: 24px; animation-delay: 0.1s; }
+.wave-bar:nth-child(3) { height: 36px; animation-delay: 0.2s; }
+.wave-bar:nth-child(4) { height: 48px; animation-delay: 0.3s; }
+.wave-bar:nth-child(5) { height: 36px; animation-delay: 0.4s; }
+.wave-bar:nth-child(6) { height: 24px; animation-delay: 0.5s; }
+.wave-bar:nth-child(7) { height: 12px; animation-delay: 0.6s; }
+
+@keyframes wave {
+  0%, 100% { transform: scaleY(1); opacity: 0.5; }
+  50% { transform: scaleY(0.3); opacity: 1; }
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* ─── Features Grid ─── */
+.features {
+  background: var(--bg2);
+}
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+  gap: 20px;
+}
+.feature-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+.feature-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(255,255,255,0.14);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+}
+.feature-card::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 3px;
+  background: linear-gradient(90deg, var(--primary), var(--teal));
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.feature-card:hover::after { opacity: 1; }
+.feature-icon {
+  font-size: 32px;
+  margin-bottom: 16px;
+  display: block;
+}
+.feature-card h3 {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.feature-card p {
+  font-size: 14px;
+  color: var(--text-2);
+  line-height: 1.7;
+}
+
+/* ─── How It Works ─── */
+.steps {
+  display: flex;
+  gap: 40px;
+  position: relative;
+}
+.steps::before {
+  content: '';
+  position: absolute;
+  top: 48px; left: 48px;
+  width: calc(100% - 96px);
+  height: 2px;
+  background: linear-gradient(90deg, var(--primary), var(--teal));
+  opacity: 0.3;
+}
+.step {
+  flex: 1;
+  text-align: center;
+  position: relative;
+}
+.step-num {
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 2px solid var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--primary);
+  margin: 0 auto 20px;
+  position: relative;
+  z-index: 1;
+}
+.step h3 {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.step p {
+  font-size: 14px;
+  color: var(--text-2);
+  max-width: 240px;
+  margin: 0 auto;
+}
+
+/* ─── Demo ─── */
+.demo-area {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: 40px;
+  max-width: 680px;
+  margin: 0 auto;
+}
+.demo-mic {
+  width: 80px; height: 80px;
+  border-radius: 50%;
+  background: var(--primary-dim);
+  border: 2px solid var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  margin: 0 auto 24px;
+  cursor: pointer;
+  transition: all 0.3s;
+  user-select: none;
+}
+.demo-mic.recording {
+  background: var(--red);
+  border-color: var(--red);
+  animation: mic-pulse 1.5s infinite;
+}
+@keyframes mic-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255,107,107,0.4); }
+  50% { box-shadow: 0 0 0 20px rgba(255,107,107,0); }
+}
+.demo-transcript {
+  background: var(--bg);
+  border-radius: var(--radius);
+  padding: 20px;
+  min-height: 60px;
+  font-size: 15px;
+  color: var(--text-2);
+  margin-bottom: 20px;
+  transition: all 0.3s;
+}
+.demo-transcript.has-text {
+  color: var(--text);
+}
+.demo-ai-result {
+  display: none;
+  background: var(--teal-dim);
+  border: 1px solid rgba(78,205,196,0.2);
+  border-radius: var(--radius);
+  padding: 20px;
+  animation: fadeInUp 0.5s ease;
+}
+.demo-ai-result.visible { display: block; }
+.demo-ai-result .ai-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--teal);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+}
+.demo-ai-result .ai-text {
+  font-size: 14px;
+  color: var(--text);
+  line-height: 1.7;
+}
+
+/* ─── Comparison ─── */
+.compare-row {
+  display: flex;
+  gap: 24px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+.compare-card {
+  flex: 1;
+  padding: 32px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  text-align: center;
+}
+.compare-card.bad {
+  background: var(--surface);
+  border-color: rgba(255,107,107,0.2);
+}
+.compare-card.good {
+  background: var(--surface);
+  border-color: rgba(78,205,196,0.3);
+}
+.compare-card h3 {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+.compare-card ul {
+  list-style: none;
+  text-align: left;
+  font-size: 14px;
+  color: var(--text-2);
+}
+.compare-card li {
+  padding: 8px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.compare-card .cross { color: var(--red); }
+.compare-card .check { color: var(--green); }
+
+/* ─── CTA ─── */
+.cta {
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.cta::before {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, var(--primary-dim) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* ─── Footer ─── */
+.footer {
+  padding: 40px 24px;
+  text-align: center;
+  border-top: 1px solid var(--border);
+  color: var(--text-3);
+  font-size: 13px;
+}
+.footer a {
+  color: var(--text-2);
+  text-decoration: none;
+}
+.footer a:hover { color: var(--primary); }
+
+/* ─── Scroll Animations ─── */
+.animate {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+.animate.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.animate-delay-1 { transition-delay: 0.1s; }
+.animate-delay-2 { transition-delay: 0.2s; }
+.animate-delay-3 { transition-delay: 0.3s; }
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── Typewriter cursor ─── */
+.type-cursor::after {
+  content: '|';
+  animation: blink 0.8s infinite;
+  color: var(--teal);
+}
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* ─── Responsive ─── */
+@media (max-width: 768px) {
+  .nav-links { display: none; }
+  .section { padding: 64px 0; }
+  .steps {
+    flex-direction: column;
+    gap: 32px;
+  }
+  .steps::before {
+    top: 24px; left: 27px;
+    width: 2px; height: calc(100% - 48px);
+  }
+  .step { display: flex; gap: 20px; text-align: left; }
+  .step-num { margin: 0; flex-shrink: 0; }
+  .step p { max-width: none; }
+  .compare-row { flex-direction: column; }
+  .features-grid { grid-template-columns: 1fr; }
+  .demo-area { padding: 24px; }
+}
+@media (max-width: 480px) {
+  .hero h1 { font-size: 32px; }
+  .hero p { font-size: 16px; }
+  .hero-actions { flex-direction: column; align-items: center; }
+  .container { padding: 0 16px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════
+     Nav
+═══════════════════════════════════ -->
+<nav class="nav">
+  <div class="nav-logo">🎙️ 語音日記</div>
+  <ul class="nav-links">
+    <li><a href="#features">功能</a></li>
+    <li><a href="#how">操作</a></li>
+    <li><a href="#demo">體驗</a></li>
+    <li><a href="#cta">開始</a></li>
+  </ul>
+</nav>
+
+<!-- ═══════════════════════════════════
+     Hero
+═══════════════════════════════════ -->
+<section class="hero">
+  <div>
+    <div class="hero-badge">
+      <span class="dot"></span> PWA 離線可用 · 數據完全私密
+    </div>
+    <h1 class="animate">
+      用<em>語音</em>記錄生活<br>讓 AI 幫你<em>反思</em>成長
+    </h1>
+    <p class="animate animate-delay-1">
+      說話就能寫日記。AI 自動整理成結構化記錄、分析錯誤模式、生成週報，讓每一天都更有意義。
+    </p>
+    <div class="hero-actions animate animate-delay-2">
+      <a href="#demo" class="btn btn-primary btn-lg">👇 體驗看看</a>
+      <a href="https://github.com" class="btn btn-outline btn-lg" target="_blank" rel="noopener">GitHub</a>
+    </div>
+    <div class="wave-wrap animate animate-delay-3">
+      <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+      <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════
+     Features
+═══════════════════════════════════ -->
+<section class="section features" id="features">
+  <div class="container">
+    <div class="section-label animate">核心功能</div>
+    <h2 class="section-title animate">不只是日記，是你的反思助手</h2>
+    <p class="section-sub animate">每一項功能都圍繞一個目的：讓記錄不只是流水帳，而是真正的成長工具。</p>
+
+    <div class="features-grid">
+      <div class="feature-card animate">
+        <span class="feature-icon">🎙️</span>
+        <h3>語音輸入</h3>
+        <p>點擊麥克風直接說話，即時轉成文字。支援繁體中文，手機也能用。</p>
+      </div>
+      <div class="feature-card animate animate-delay-1">
+        <span class="feature-icon">✨</span>
+        <h3>AI 模板整理</h3>
+        <p>選一個模板，AI 自動把流水帳轉成結構化記錄 — 要點、情緒、行動項目一目了然。</p>
+      </div>
+      <div class="feature-card animate animate-delay-2">
+        <span class="feature-icon">💬</span>
+        <h3>AI 對話反思</h3>
+        <p>針對任何一條記錄和 AI 深度對話，發掘盲點，獲得新視角。</p>
+      </div>
+      <div class="feature-card animate">
+        <span class="feature-icon">🔁</span>
+        <h3>錯誤模式分析</h3>
+        <p>AI 掃描所有錯誤復盤記錄，找出重複犯的錯，幫你徹底避坑。</p>
+      </div>
+      <div class="feature-card animate animate-delay-1">
+        <span class="feature-icon">📊</span>
+        <h3>週報生成</h3>
+        <p>自動總結本週亮點、待改進事項，產出一份行動計畫。</p>
+      </div>
+      <div class="feature-card animate animate-delay-2">
+        <span class="feature-icon">🏷️</span>
+        <h3>智慧標籤</h3>
+        <p>AI 自動建議標籤，方便日後用關鍵字或分類快速找到過往記錄。</p>
+      </div>
+      <div class="feature-card animate">
+        <span class="feature-icon">🔍</span>
+        <h3>搜尋與篩選</h3>
+        <p>按關鍵字、分類、重要性快速過濾，再久遠的記錄都能秒找到。</p>
+      </div>
+      <div class="feature-card animate animate-delay-1">
+        <span class="feature-icon">📤</span>
+        <h3>備份與匯出</h3>
+        <p>一鍵備份成 JSON，隨時還原。也支援 Markdown 匯出。</p>
+      </div>
+      <div class="feature-card animate animate-delay-2">
+        <span class="feature-icon">📱</span>
+        <h3>PWA 離線可用</h3>
+        <p>可安裝到手機桌面，沒網路也能瀏覽記錄。資料存在裝置上，完全私密。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════
+     How It Works
+═══════════════════════════════════ -->
+<section class="section" id="how">
+  <div class="container">
+    <div class="section-label animate">三步開始</div>
+    <h2 class="section-title animate">從記錄到成長，只要三步</h2>
+    <p class="section-sub animate">不需要學習曲線，打開就能用。</p>
+
+    <div class="steps">
+      <div class="step animate">
+        <div class="step-num">1</div>
+        <div>
+          <h3>🎙️ 開口說</h3>
+          <p>點擊麥克風，把今天發生的事、想法、情緒說出來，語音自動轉成文字。</p>
+        </div>
+      </div>
+      <div class="step animate animate-delay-1">
+        <div class="step-num">2</div>
+        <div>
+          <h3>✨ AI 整理</h3>
+          <p>選一個模板，AI 把內容整理成要點、反思、行動項目，不再只是流水帳。</p>
+        </div>
+      </div>
+      <div class="step animate animate-delay-2">
+        <div class="step-num">3</div>
+        <div>
+          <h3>🔄 反思成長</h3>
+          <p>每週查看 AI 分析報告，發現自己的模式，持續改善，成為更好的自己。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════
+     Demo
+═══════════════════════════════════ -->
+<section class="section features" id="demo">
+  <div class="container" style="text-align:center">
+    <div class="section-label animate">互動體驗</div>
+    <h2 class="section-title animate">模擬一下，看看怎麼運作</h2>
+    <p class="section-sub animate" style="margin-left:auto;margin-right:auto">點擊下方麥克風按鈕，體驗語音日記的核心流程。</p>
+
+    <div class="demo-area animate">
+      <div class="demo-mic" id="demo-mic" title="點擊模擬錄音">🎙️</div>
+      <div style="font-size:13px;color:var(--text-3);margin-bottom:16px" id="demo-hint">點擊麥克風模擬語音輸入</div>
+
+      <div class="demo-transcript" id="demo-transcript">
+        點擊麥克風開始...
+      </div>
+
+      <button class="btn btn-primary" id="demo-ai-btn" disabled>
+        ✨ AI 套模板整理
+      </button>
+
+      <div class="demo-ai-result" id="demo-ai-result">
+        <div class="ai-label">🤖 AI 整理結果</div>
+        <div class="ai-text" id="demo-ai-text"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════
+     Comparison
+═══════════════════════════════════ -->
+<section class="section" id="compare">
+  <div class="container" style="text-align:center">
+    <div class="section-label animate">為什麼需要語音日記</div>
+    <h2 class="section-title animate">有語音日記 vs 沒有</h2>
+    <p class="section-sub animate" style="margin-left:auto;margin-right:auto">改變的不是記錄方式，而是你對生活的覺察深度。</p>
+
+    <div class="compare-row">
+      <div class="compare-card bad animate">
+        <h3>😓 沒有語音日記</h3>
+        <ul>
+          <li><span class="cross">✕</span> 想寫日記但懶得打字</li>
+          <li><span class="cross">✕</span> 寫了也只是流水帳</li>
+          <li><span class="cross">✕</span> 從不回頭看過往記錄</li>
+          <li><span class="cross">✕</span> 重複犯同樣的錯</li>
+          <li><span class="cross">✕</span> 不知道這週進步了什麼</li>
+        </ul>
+      </div>
+      <div class="compare-card good animate animate-delay-1">
+        <h3>✨ 有語音日記</h3>
+        <ul>
+          <li><span class="check">✓</span> 開口 30 秒完成一篇日記</li>
+          <li><span class="check">✓</span> AI 自動整理成要點與反思</li>
+          <li><span class="check">✓</span> 隨時搜尋過往記錄回顧</li>
+          <li><span class="check">✓</span> AI 幫你找出重複錯誤</li>
+          <li><span class="check">✓</span> 每週自動生成成長報告</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════
+     CTA
+═══════════════════════════════════ -->
+<section class="section cta" id="cta">
+  <div class="container" style="position:relative;z-index:1">
+    <h2 class="section-title animate" style="margin-left:auto;margin-right:auto;max-width:600px">
+      準備好用語音寫日記了嗎？
+    </h2>
+    <p class="section-sub animate" style="margin-left:auto;margin-right:auto">
+      完全免費、開源、資料私有。打開瀏覽器就能開始。
+    </p>
+    <div class="animate" style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap">
+      <a href="../index.html" class="btn btn-primary btn-lg">🚀 立即使用 App</a>
+      <a href="https://github.com" class="btn btn-outline btn-lg" target="_blank" rel="noopener">⭐ Star on GitHub</a>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════
+     Footer
+═══════════════════════════════════ -->
+<footer class="footer">
+  <p>🎙️ 語音日記 · VoiceJournal — 開源、免費、資料私有</p>
+  <p style="margin-top:4px">
+    <a href="https://github.com">GitHub</a> · 採用 MIT 授權
+  </p>
+</footer>
+
+<!-- ═══════════════════════════════════
+     Scripts
+═══════════════════════════════════ -->
+<script>
+// ─── Scroll Animation (Intersection Observer) ───
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+    }
+  });
+}, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+
+document.querySelectorAll('.animate').forEach(el => observer.observe(el));
+
+// ─── Demo: Simulated Voice Recording ───
+const demoMic = document.getElementById('demo-mic');
+const demoHint = document.getElementById('demo-hint');
+const demoTranscript = document.getElementById('demo-transcript');
+const demoAiBtn = document.getElementById('demo-ai-btn');
+const demoAiResult = document.getElementById('demo-ai-result');
+const demoAiText = document.getElementById('demo-ai-text');
+
+const simulatedText = '今天工作上有個專案會議，討論了新功能的方向。雖然有些意見分歧，但最後大家達成共識。會後和同事一起去吃了碗牛肉麵，聊了很多生活上的事。晚上回家想了想，覺得在會議中我應該更主動表達自己的觀點，不要怕衝突。';
+
+let isRecording = false;
+let recordTimer = null;
+let charIndex = 0;
+
+function resetDemo() {
+  isRecording = false;
+  charIndex = 0;
+  demoMic.classList.remove('recording');
+  demoMic.textContent = '🎙️';
+  demoHint.textContent = '點擊麥克風模擬語音輸入';
+  demoTranscript.textContent = '點擊麥克風開始...';
+  demoTranscript.classList.remove('has-text', 'type-cursor');
+  demoAiBtn.disabled = true;
+  demoAiResult.classList.remove('visible');
+  if (recordTimer) { clearInterval(recordTimer); recordTimer = null; }
+}
+
+demoMic.addEventListener('click', () => {
+  if (isRecording) {
+    // Stop recording
+    isRecording = false;
+    demoMic.classList.remove('recording');
+    demoMic.textContent = '🎙️';
+    demoHint.textContent = '錄製完成！點擊下方按鈕讓 AI 整理';
+    demoTranscript.classList.remove('type-cursor');
+    demoAiBtn.disabled = false;
+    if (recordTimer) { clearInterval(recordTimer); recordTimer = null; }
+  } else {
+    // Start recording
+    resetDemo();
+    isRecording = true;
+    charIndex = 0;
+    demoMic.classList.add('recording');
+    demoMic.textContent = '⏹️';
+    demoHint.textContent = '模擬錄音中... 點擊停止';
+    demoTranscript.textContent = '';
+    demoTranscript.classList.add('has-text', 'type-cursor');
+
+    recordTimer = setInterval(() => {
+      if (charIndex < simulatedText.length) {
+        demoTranscript.textContent += simulatedText[charIndex];
+        charIndex++;
+      } else {
+        // Auto stop
+        isRecording = false;
+        demoMic.classList.remove('recording');
+        demoMic.textContent = '🎙️';
+        demoHint.textContent = '錄製完成！點擊下方按鈕讓 AI 整理';
+        demoTranscript.classList.remove('type-cursor');
+        demoAiBtn.disabled = false;
+        clearInterval(recordTimer);
+        recordTimer = null;
+      }
+    }, 40);
+  }
+});
+
+// ─── Demo: Simulated AI Processing ───
+function typeAIResult(i) {
+  const result = `📌 核心要點
+• 參加了專案會議，討論新功能方向
+• 團隊最終達成共識
+• 和同事午餐交流
+
+😊 情緒
+正面（達成共識的成就感），略帶遺憾（覺得自己不夠主動）
+
+💡 反思
+在會議中應該更勇於表達自己的觀點，建設性衝突能帶來更好的決策
+
+✅ 行動項目
+下次會議至少提出一個自己的想法或疑問`;
+
+  if (i < result.length) {
+    demoAiResult.classList.add('visible');
+    demoAiText.textContent += result[i];
+    demoAiResult.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    setTimeout(() => typeAIResult(i + 1), 15);
+  } else {
+    demoAiBtn.textContent = '✨ 重新整理';
+    demoAiBtn.disabled = false;
+  }
+}
+
+function runAI() {
+  demoAiBtn.disabled = true;
+  demoAiBtn.textContent = '⏳ AI 整理中...';
+  demoAiResult.classList.remove('visible');
+  demoAiText.textContent = '';
+  setTimeout(() => typeAIResult(0), 800);
+}
+
+demoAiBtn.addEventListener('click', runAI);
+</script>
+
+</body>
+</html>
